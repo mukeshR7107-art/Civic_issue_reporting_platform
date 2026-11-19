@@ -1,0 +1,14 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:civictrack;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1;INIT=CREATE SCHEMA IF NOT EXISTS civictrack
+    username: sa
+    password: ''
+  flyway:
+    enabled: false
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+app:
+  supabase-url: https://example.supabase.co
+  supabase-service-key: test-only
+  allowed-origin: http://localhost:5173

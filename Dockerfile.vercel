@@ -1,0 +1,28 @@
+FROM node:22-alpine AS frontend
+WORKDIR /web
+COPY package.json package-lock.json ./
+RUN npm ci
+COPY index.html tsconfig.json vite.config.ts ./
+COPY src ./src
+ARG VITE_SUPABASE_URL
+ARG VITE_SUPABASE_PUBLISHABLE_KEY
+ENV VITE_SUPABASE_URL=$VITE_SUPABASE_URL
+ENV VITE_SUPABASE_PUBLISHABLE_KEY=$VITE_SUPABASE_PUBLISHABLE_KEY
+ENV VITE_DEMO_MODE=false
+RUN npm run build
+
+FROM maven:3.9.11-eclipse-temurin-21 AS backend
+WORKDIR /build
+COPY backend/pom.xml ./pom.xml
+COPY backend/src ./src
+COPY --from=frontend /web/dist ./src/main/resources/static
+RUN mvn -B package -DskipTests
+
+FROM eclipse-temurin:21-jre-alpine
+RUN addgroup -S civictrack && adduser -S civictrack -G civictrack
+WORKDIR /app
+COPY --from=backend /build/target/civictrack-api-0.1.0.jar app.jar
+USER civictrack
+ENV PORT=8080
+EXPOSE 8080
+ENTRYPOINT ["java","-XX:MaxRAMPercentage=70","-jar","app.jar"]
