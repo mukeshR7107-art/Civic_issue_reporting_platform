@@ -20,6 +20,7 @@ class StorageApi {
   Profile p=service.actor(jwt);Complaint c=service.get(p,id);
   Workflow.require(kind.equals("REPORT")&&p.id.equals(c.reporterId)&&Set.of(Status.SUBMITTED,Status.NEEDS_INFORMATION).contains(c.status)||kind.equals("RESOLUTION")&&p.role==Role.OFFICER&&p.id.equals(c.officerId)&&c.status==Status.IN_PROGRESS,"You cannot attach this kind of evidence now");
   if(key.isBlank())throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE,"Image storage has not been configured");
+  if(!key.startsWith("eyJ"))throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE,"Storage needs a legacy service_role JWT for direct private-object access. Keep the newer sb_secret key for API gateway calls.");
   if(file.isEmpty()||file.getSize()>3*1024*1024)throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Choose a JPEG or PNG under 3 MB");
   byte[] bytes=file.getBytes();String type;
   if(bytes.length>8&&(bytes[0]&255)==137&&bytes[1]==80&&bytes[2]==78&&bytes[3]==71)type="image/png";

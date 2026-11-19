@@ -36,7 +36,7 @@ Required server variables:
 | `DATABASE_PASSWORD` | Server database password |
 | `SUPABASE_URL` | `https://wfchfajwkhkwmrutyvzp.supabase.co` |
 | `SUPABASE_PUBLISHABLE_KEY` | Public `sb_publishable_...` key exposed through `/api/config` |
-| `SUPABASE_SERVICE_KEY` | Private Storage access; backend only |
+| `SUPABASE_SERVICE_KEY` | Legacy `service_role` JWT beginning `eyJ`, for direct private Storage REST access; backend only |
 | `ALLOWED_ORIGIN` | Exact frontend origin; defaults to `http://localhost:5173` |
 | `PORT` | HTTP port; defaults to 8080 |
 
@@ -101,7 +101,7 @@ Verify the UUID first. There is no self-promotion endpoint. Administrators can p
 
 1. Connect the GitHub repository to a **new CivicTrack Vercel project**, with the repository root as Root Directory.
 2. Set the backend variables above in Vercel, with `PORT=8080` and `ALLOWED_ORIGIN` equal to the deployment origin.
-3. Set `SUPABASE_PUBLISHABLE_KEY` to the public `sb_publishable_...` key. The frontend obtains public configuration from `/api/config` at runtime; Docker build arguments are optional. Never provide a secret key to the frontend build.
+3. Set `SUPABASE_PUBLISHABLE_KEY` to the public `sb_publishable_...` key. Set `SUPABASE_SERVICE_KEY` to the legacy JWT-style `service_role` key beginning `eyJ`; the newer `sb_secret_...` key cannot be used as a Storage `Authorization: Bearer` token by this direct REST client. The frontend obtains public configuration from `/api/config` at runtime; Docker build arguments are optional. Never provide a secret key to the frontend build.
 4. Deploy, then configure the Supabase Auth redirects for the resulting URL.
 5. Run the live sign-in → report → assignment → evidence → confirmation workflow using provisioned test accounts before accepting real reports.
 
