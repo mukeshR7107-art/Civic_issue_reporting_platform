@@ -19,8 +19,6 @@ class StorageApi {
  @PostMapping("/complaints/{id}/attachments") Attachment upload(@AuthenticationPrincipal Jwt jwt,@PathVariable UUID id,@RequestParam MultipartFile file,@RequestParam String kind) throws IOException {
   Profile p=service.actor(jwt);Complaint c=service.get(p,id);
   Workflow.require(kind.equals("REPORT")&&p.id.equals(c.reporterId)&&Set.of(Status.SUBMITTED,Status.NEEDS_INFORMATION).contains(c.status)||kind.equals("RESOLUTION")&&p.role==Role.OFFICER&&p.id.equals(c.officerId)&&c.status==Status.IN_PROGRESS,"You cannot attach this kind of evidence now");
-  if(key.isBlank())throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE,"Image storage has not been configured");
-  if(!key.startsWith("eyJ"))throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE,"Storage needs a legacy service_role JWT for direct private-object access. Keep the newer sb_secret key for API gateway calls.");
   if(file.isEmpty()||file.getSize()>3*1024*1024)throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Choose a JPEG or PNG under 3 MB");
   byte[] bytes=file.getBytes();String type;
   if(bytes.length>8&&(bytes[0]&255)==137&&bytes[1]==80&&bytes[2]==78&&bytes[3]==71)type="image/png";
@@ -34,6 +32,8 @@ class StorageApi {
    }finally{reader.dispose();}
   }
   if(bytes.length>3*1024*1024)throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Processed image exceeds 3 MB");
+  if(key.isBlank())throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE,"Image storage has not been configured");
+  if(!key.startsWith("eyJ"))throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE,"Storage needs a legacy service_role JWT for direct private-object access. Keep the newer sb_secret key for API gateway calls.");
   Attachment a=new Attachment();a.complaintId=id;a.uploadedBy=p.id;a.kind=kind;a.contentType=type;a.objectPath=id+"/"+a.id+(type.equals("image/png")?".png":".jpg");
   storage.post().uri("/object/civic-evidence/"+a.objectPath).contentType(MediaType.parseMediaType(type)).body(bytes).retrieve().toBodilessEntity();
   service.attachments().save(a);service.event(p,c,"EVIDENCE",kind.equals("REPORT")?"Report photograph added":"Resolution photograph added",false);return a;
